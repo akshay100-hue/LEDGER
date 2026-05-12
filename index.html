@@ -1,4 +1,12 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="GCS Ledger" />
+<title>Ganesh Cold Storage — Ledger</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -7,6 +15,7 @@
   --border:#C8C6BE;--border-light:#E0DED6;
   --dr-bg:#FAECE7;--dr-text:#7A2E10;--cr-bg:#EAF3DE;--cr-text:#2E5A0A;--nil-bg:#EEEDEB;--nil-text:#5F5E5A;
   --blue:#185FA5;--blue-light:#E6F1FB;--input-bg:#F7F6F2;
+  --amber-bg:#FFF8E6;--amber-border:#F0D080;--amber-text:#7A5500;
 }
 .dark-mode{
   --bg-page:#1C1C1A;--bg-card:#262623;--bg-sidebar:#222220;--bg-th:#2E2E2B;--bg-hover:#2E2E2B;--bg-active:#0C3258;--bg-metric:#2A2A27;
@@ -14,71 +23,80 @@
   --border:#3A3A36;--border-light:#303030;
   --dr-bg:#3D1A0E;--dr-text:#F5A88A;--cr-bg:#1A2E0E;--cr-text:#90C45A;--nil-bg:#2A2A27;--nil-text:#9a9a93;
   --blue:#378ADD;--blue-light:#0C2A44;--input-bg:#2E2E2B;
+  --amber-bg:#2A2200;--amber-border:#5A4500;--amber-text:#F0C040;
 }
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg-page);transition:background 0.2s;}
+html,body{height:100%;}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg-page);transition:background 0.2s;-webkit-font-smoothing:antialiased;}
 input,select,button{font-family:inherit;}
-.app{min-height:620px;display:flex;flex-direction:column;}
-.header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.app{min-height:100vh;display:flex;flex-direction:column;}
+.header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .header-title{display:flex;align-items:center;gap:8px;}
 .header-title h1{font-size:14px;font-weight:600;color:var(--text-primary);}
-.header-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary);}
-.header-right{display:flex;align-items:center;gap:6px;}
+.header-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary);flex:1;justify-content:center;min-width:0;}
+.header-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .hdr-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 11px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg-card);color:var(--text-secondary);transition:all 0.15s;white-space:nowrap;}
 .hdr-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
 .hdr-btn.active{background:var(--blue-light);color:var(--blue);border-color:var(--blue);}
-.save-btn{background:var(--blue);color:#fff;border-color:var(--blue);}
-.save-btn:hover{background:#0f4a8a;color:#fff;}
-.save-btn.saved{background:#2E6B10;border-color:#2E6B10;color:#fff;}
+.signin-btn{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500;}
+.signin-btn:hover{background:#0f4a8a;color:#fff;}
+.sync-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg-metric);color:var(--text-secondary);white-space:nowrap;}
+.sync-status.synced{color:var(--cr-text);border-color:var(--cr-text);background:var(--cr-bg);}
+.sync-status.saving{color:var(--blue);border-color:var(--blue);background:var(--blue-light);}
+.sync-status.error{color:var(--dr-text);border-color:var(--dr-text);background:var(--dr-bg);}
+.sync-status.offline{color:var(--amber-text);border-color:var(--amber-border);background:var(--amber-bg);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sync-status.saving .sync-dot{animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .dark-toggle{width:34px;height:20px;border-radius:10px;border:1px solid var(--border);background:var(--bg-metric);cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;}
 .dark-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--text-secondary);top:2px;left:2px;transition:all 0.2s;}
 .dark-mode .dark-toggle::after{left:16px;background:var(--blue);}
-.main{display:flex;flex:1;}
-.sidebar{width:210px;min-width:210px;background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;max-height:572px;display:flex;flex-direction:column;}
+.main{display:flex;flex:1;min-height:0;}
+.sidebar{width:230px;min-width:230px;background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
 .sidebar-search{padding:8px 10px;border-bottom:1px solid var(--border);}
-.sidebar-search input{width:100%;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
+.sidebar-search input{width:100%;font-size:13px;padding:7px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
 .sidebar-search input:focus{outline:none;border-color:var(--blue);}
 .party-list-wrap{flex:1;overflow-y:auto;}
-.party-item{padding:8px 10px 8px 12px;cursor:pointer;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;gap:4px;}
+.party-item{padding:10px 10px 10px 12px;cursor:pointer;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;gap:4px;}
 .party-item:hover{background:var(--bg-hover);}
 .party-item:hover .party-del-btn{opacity:1;}
 .party-item.active{background:var(--bg-active);}
 .party-item.active .party-del-btn{opacity:1;}
 .party-main{display:flex;flex-direction:column;flex:1;min-width:0;cursor:pointer;}
 .party-name{font-size:12px;color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.party-del-btn{opacity:0;flex-shrink:0;border:1px solid transparent;background:none;cursor:pointer;font-size:11px;font-weight:500;padding:2px 6px;border-radius:4px;color:var(--dr-text);transition:all 0.15s;line-height:1.4;}
+.party-del-btn{opacity:0;flex-shrink:0;border:1px solid transparent;background:none;cursor:pointer;font-size:14px;font-weight:500;padding:4px 8px;border-radius:4px;color:var(--dr-text);transition:all 0.15s;line-height:1;}
 .party-del-btn:hover{background:var(--dr-bg);border-color:var(--dr-text);}
 .badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;border:1px solid transparent;}
 .badge-dr{background:var(--dr-bg);color:var(--dr-text);}
 .badge-cr{background:var(--cr-bg);color:var(--cr-text);}
 .badge-nil{background:var(--nil-bg);color:var(--nil-text);}
-.new-party-btn{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;padding:7px;border:1px dashed var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;margin:8px;background:none;width:calc(100% - 16px);transition:all 0.1s;flex-shrink:0;}
+.new-party-btn{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;padding:9px;border:1px dashed var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;margin:8px;background:none;width:calc(100% - 16px);transition:all 0.1s;flex-shrink:0;}
 .new-party-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
-.content{flex:1;padding:14px;overflow-y:auto;max-height:572px;background:var(--bg-page);}
+.content{flex:1;padding:14px;overflow-y:auto;background:var(--bg-page);min-width:0;}
 .summary-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
 .metric-card{background:var(--bg-metric);border-radius:8px;padding:12px 14px;border:1px solid var(--border-light);}
 .metric-label{font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
 .metric-val{font-size:18px;font-weight:600;color:var(--text-primary);}
 .metric-val.red{color:var(--dr-text);}
 .metric-val.green{color:var(--cr-text);}
-.party-header{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.party-header{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
 .party-header-left h2{font-size:14px;font-weight:600;color:var(--text-primary);}
-.party-header-stats{display:flex;gap:14px;margin-top:4px;font-size:11px;color:var(--text-secondary);}
+.party-header-stats{display:flex;gap:14px;margin-top:4px;font-size:11px;color:var(--text-secondary);flex-wrap:wrap;}
 .balance-big{font-size:19px;font-weight:600;}
 .balance-big.red{color:var(--dr-text);}
 .balance-big.green{color:var(--cr-text);}
 .party-header-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
 .del-party-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:4px 9px;border:1px solid var(--dr-text);border-radius:5px;color:var(--dr-text);background:none;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .del-party-btn:hover{background:var(--dr-bg);}
-.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;}
 .section-header h3{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;}
-.section-actions{display:flex;gap:6px;}
-.action-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;background:var(--bg-card);transition:all 0.1s;white-space:nowrap;}
+.section-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.action-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:7px 11px;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;background:var(--bg-card);transition:all 0.1s;white-space:nowrap;}
 .action-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
-.tbl-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
-.tbl-wrap thead th{background:var(--bg-th);padding:8px 10px;text-align:left;font-weight:600;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);border-right:1px solid var(--border-light);}
+.tbl-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow-x:auto;}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl-wrap thead th{background:var(--bg-th);padding:8px 10px;text-align:left;font-weight:600;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);border-right:1px solid var(--border-light);white-space:nowrap;}
 .tbl-wrap thead th:last-child{border-right:none;}
-.tbl-wrap tbody td{padding:7px 10px;color:var(--text-primary);border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);vertical-align:middle;}
+.tbl-wrap tbody td{padding:8px 10px;color:var(--text-primary);border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);vertical-align:middle;}
 .tbl-wrap tbody td:last-child{border-right:none;}
 .tbl-wrap tbody tr:last-child td{border-bottom:none;}
 .tbl-wrap tbody tr:hover{background:var(--bg-hover);}
@@ -87,42 +105,74 @@ input,select,button{font-family:inherit;}
 .dr-amt{color:var(--dr-text);font-weight:500;}
 .cr-amt{color:var(--cr-text);font-weight:500;}
 .row-actions{display:flex;gap:4px;justify-content:center;}
-.row-btn{display:inline-flex;align-items:center;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;transition:all 0.15s;}
+.row-btn{display:inline-flex;align-items:center;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:11px;font-weight:500;padding:5px 10px;border-radius:5px;transition:all 0.15s;}
 .row-btn.edit-btn{color:var(--blue);}
 .row-btn.edit-btn:hover{background:var(--blue-light);border-color:var(--blue);}
 .row-btn.del-btn{color:var(--dr-text);}
 .row-btn.del-btn:hover{background:var(--dr-bg);border-color:var(--dr-text);}
-.unsaved-bar{background:#FFF8E6;border:1px solid #F0D080;border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#7A5500;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.dark-mode .unsaved-bar{background:#2A2200;border-color:#5A4500;color:#F0C040;}
-.form-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:200;}
-.form-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:20px;width:330px;max-width:95vw;}
+.unsaved-bar{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--amber-text);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.signin-overlay{position:fixed;inset:0;background:var(--bg-page);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.signin-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:30px;max-width:420px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+.signin-card h2{font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text-primary);}
+.signin-card p{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:18px;}
+.signin-card .big-signin{background:var(--blue);color:#fff;border:none;padding:11px 22px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+.signin-card .big-signin:hover{opacity:0.9;}
+.signin-card .signin-foot{margin-top:16px;font-size:11px;color:var(--text-muted);}
+.signin-card .error-msg{color:var(--dr-text);background:var(--dr-bg);padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:14px;text-align:left;}
+.form-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:14px;}
+.form-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:20px;width:340px;max-width:100%;}
 .form-card h3{font-size:14px;font-weight:600;margin-bottom:3px;color:var(--text-primary);}
 .form-sub{font-size:11px;color:var(--text-muted);margin-bottom:14px;}
 .form-row{margin-bottom:10px;}
 .form-row label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:3px;font-weight:500;}
-.form-row input{width:100%;font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
+.form-row input{width:100%;font-size:14px;padding:8px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
 .form-row input:focus{outline:none;border-color:var(--blue);}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.form-btns{display:flex;gap:7px;margin-top:14px;justify-content:flex-end;}
-.btn-primary{background:var(--blue);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
+.form-btns{display:flex;gap:7px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;}
+.btn-primary{background:var(--blue);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
 .btn-primary:hover{opacity:0.88;}
-.btn-danger{background:var(--dr-text);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
+.btn-danger{background:var(--dr-text);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
 .btn-danger:hover{opacity:0.88;}
-.btn-cancel{background:transparent;border:1px solid var(--border);padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-primary);}
+.btn-cancel{background:transparent;border:1px solid var(--border);padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-primary);}
 .btn-cancel:hover{background:var(--bg-hover);}
-.confirm-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:22px;width:340px;max-width:95vw;}
+.confirm-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:22px;width:360px;max-width:100%;}
 .confirm-card h3{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--dr-text);}
 .confirm-card p{font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:4px;}
 .confirm-card strong{color:var(--text-primary);}
-.toast{position:fixed;bottom:16px;right:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text-primary);z-index:999;box-shadow:0 2px 10px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text-primary);z-index:999;box-shadow:0 2px 12px rgba(0,0,0,0.18);opacity:0;transition:opacity 0.3s;pointer-events:none;max-width:90vw;}
 .toast.show{opacity:1;}
+.mobile-menu-btn{display:none;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:7px 11px;border-radius:6px;cursor:pointer;font-size:12px;}
+.user-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 9px;border-radius:6px;background:var(--bg-metric);color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;}
+.user-chip:hover{background:var(--bg-hover);}
+.user-avatar{width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
+/* Mobile responsive */
+@media (max-width:768px){
+  .header{padding:8px 10px;gap:6px;}
+  .header-title h1{font-size:13px;}
+  .header-stats{display:none;}
+  .mobile-menu-btn{display:inline-flex;align-items:center;gap:4px;}
+  .sidebar{position:fixed;top:0;left:-100%;height:100%;width:280px;z-index:90;transition:left 0.25s ease;box-shadow:2px 0 12px rgba(0,0,0,0.1);}
+  .sidebar.mobile-open{left:0;}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:85;}
+  .sidebar-overlay.active{display:block;}
+  .content{padding:10px;}
+  .summary-cards{grid-template-columns:1fr;gap:8px;}
+  .party-header{padding:11px 13px;}
+  .party-header-right{align-items:stretch;width:100%;text-align:left;}
+  .balance-big{font-size:22px;}
+  .tbl-wrap{font-size:11px;}
+  .tbl-wrap thead th{padding:7px 6px;font-size:9px;}
+  .tbl-wrap tbody td{padding:8px 6px;}
+  .hdr-btn{padding:6px 9px;font-size:11px;}
+  .signin-card{padding:22px;}
+}
 @media print{
   .no-print{display:none!important;}
   .main{display:block;}
-  .sidebar{display:none;}
-  .content{max-height:unset;overflow:visible;padding:0;}
+  .sidebar,.sidebar-overlay{display:none;}
+  .content{padding:0;}
   .header{border:none;padding:0 0 10px 0;}
-  .tbl-wrap{border:1px solid #999;border-radius:0;}
+  .tbl-wrap{border:1px solid #999;border-radius:0;overflow:visible;}
   .tbl-wrap table{font-size:11px;}
   .tbl-wrap thead th{background:#eee!important;color:#444!important;border-color:#bbb!important;}
   .tbl-wrap tbody td{border-color:#ddd!important;}
@@ -136,28 +186,51 @@ input,select,button{font-family:inherit;}
 }
 .print-header,.print-sub{display:none;}
 </style>
+</head>
+<body>
 
-<div class="app" id="root">
+<!-- ──────────── Sign-In Overlay ──────────── -->
+<div class="signin-overlay" id="signin-overlay" style="display:none;">
+  <div class="signin-card">
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--blue);margin-bottom:10px"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <h2>Ganesh Cold Storage — Ledger</h2>
+    <p>Sign in with Google to sync your ledger across all devices. Your data will be saved to a private file in your Google Drive.</p>
+    <div id="signin-error" class="error-msg" style="display:none;"></div>
+    <button class="big-signin" id="signin-btn" onclick="handleSignIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.1z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2.1 1.4-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.2 5.2C40.9 35.7 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="signin-foot">A file named <strong>gcs_ledger_data.json</strong> will be created in your Drive.</div>
+  </div>
+</div>
+
+<!-- ──────────── Main App ──────────── -->
+<div class="app" id="root" style="display:none;">
   <div class="header no-print">
+    <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="header-title">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary)"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <h1>Ganesh Cold Storage — Accounts Ledger</h1>
+      <h1>Ganesh Cold Storage — Ledger</h1>
     </div>
     <div class="header-stats" id="header-stats"></div>
     <div class="header-right">
+      <span class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-text">Idle</span></span>
       <button class="hdr-btn" id="summary-nav-btn" onclick="goSummary()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         Summary
       </button>
-      <button class="hdr-btn save-btn" id="save-btn" onclick="manualSave()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save
+      <button class="user-chip" id="user-chip" onclick="handleSignOut()" title="Sign out">
+        <span class="user-avatar" id="user-avatar">U</span>
+        <span id="user-name" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Account</span>
       </button>
       <button class="dark-toggle" onclick="toggleDark()" aria-label="Toggle dark mode"></button>
     </div>
   </div>
   <div class="main">
-    <div class="sidebar no-print">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar no-print" id="sidebar">
       <div class="sidebar-search">
         <input type="text" placeholder="Search party…" oninput="filterParties(this.value)" />
       </div>
@@ -173,13 +246,26 @@ input,select,button{font-family:inherit;}
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- Google API scripts -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+
 <script>
-const LS_KEY  = 'gcs_ledger_v8';
-const LS_DARK = 'gcs_ledger_dark';
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONFIGURATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+const CLIENT_ID = '141072388311-ludu2590nic5u7cko27adqlf2aj3p195.apps.googleusercontent.com';
+const DRIVE_FILE_NAME = 'gcs_ledger_data.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const LS_DATA  = 'gcs_ledger_v8';      // local cache + offline fallback
+const LS_DARK  = 'gcs_ledger_dark';
+const LS_TOKEN = 'gcs_ledger_token';   // cached access token (short-lived)
+const LS_FID   = 'gcs_ledger_fid';     // cached Drive file ID
+const LS_USER  = 'gcs_ledger_user';    // cached user info
 
-const lsSave = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } };
-const lsLoad = (k,d) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   DEFAULT SEED DATA (used on first sign-in if no Drive file exists)
+   ═══════════════════════════════════════════════════════════════════════════ */
 const defaultData = [
   {name:'BRILL INTERNATIONAL',entries:[{date:46112,particular:'INVOICE 318',dr:1227715,cr:0},{date:46142,particular:'RTGS KOTAK',dr:0,cr:200000}]},
   {name:'ROYAL INTERNATIONAL',entries:[{date:46112,particular:'INVOICE 309',dr:119501,cr:0}]},
@@ -212,6 +298,13 @@ const defaultData = [
   {name:'VISHAL AGRO IMPEX',entries:[{date:46148,particular:'INVOICE 18',dr:108324,cr:0},{date:46149,particular:'IMPS',dr:0,cr:108324}]}
 ];
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+const lsSave = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } };
+const lsLoad = (k,d) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
+const lsDel  = k => { try{ localStorage.removeItem(k); }catch(e){} };
+
 const excelToDate = n => {
   if(!n||isNaN(n)) return '—';
   return new Date(Date.UTC(1899,11,30)+n*86400000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
@@ -233,47 +326,359 @@ const showToast = (msg,err) => {
   t.style.borderColor=err?'var(--dr-text)':'var(--border)';
   t.classList.add('show');
   clearTimeout(window._tt);
-  window._tt=setTimeout(()=>t.classList.remove('show'),2500);
+  window._tt=setTimeout(()=>t.classList.remove('show'),2800);
 };
 
-let parties       = lsLoad(LS_KEY, JSON.parse(JSON.stringify(defaultData)));
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+let parties       = [];
 let selectedParty = null;
 let searchQ       = '';
 let darkMode      = lsLoad(LS_DARK, false);
 let entryModal    = null;
 let unsaved       = false;
 
+let tokenClient = null;
+let accessToken = lsLoad(LS_TOKEN, null);
+let driveFileId = lsLoad(LS_FID, null);
+let userInfo    = lsLoad(LS_USER, null);
+let gapiReady = false;
+let gisReady  = false;
+let saveQueued = false;
+let saveInFlight = false;
+let lastSavedSnapshot = '';
+
 if(darkMode) document.body.classList.add('dark-mode');
 
-window.manualSave = () => {
-  const ok=lsSave(LS_KEY,parties);
-  if(ok){ unsaved=false; updateSaveBtn(); showToast('✓ All changes saved'); }
-  else   { showToast('⚠ Save failed — storage may be full',true); }
-};
+/* ═══════════════════════════════════════════════════════════════════════════
+   GOOGLE AUTH + DRIVE INTEGRATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+function setSyncStatus(state, text){
+  const el = document.getElementById('sync-status');
+  const txt = document.getElementById('sync-text');
+  if(!el||!txt) return;
+  el.className = 'sync-status ' + state;
+  txt.textContent = text;
+}
 
-const markUnsaved = () => { unsaved=true; updateSaveBtn(); };
+function waitForGoogleLibs(){
+  return new Promise((resolve)=>{
+    const check = ()=>{
+      if(window.google && window.google.accounts && window.gapi){
+        gisReady = true;
+        resolve();
+      } else {
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
 
-const updateSaveBtn = () => {
-  const btn=document.getElementById('save-btn');
-  if(!btn) return;
-  if(!unsaved){
-    btn.className='hdr-btn save-btn saved';
-    btn.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
-  } else {
-    btn.className='hdr-btn save-btn';
-    btn.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save`;
+async function initGapi(){
+  return new Promise((resolve, reject)=>{
+    gapi.load('client', async ()=>{
+      try{
+        await gapi.client.init({
+          discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+        });
+        gapiReady = true;
+        resolve();
+      }catch(e){ reject(e); }
+    });
+  });
+}
+
+function initTokenClient(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: '' // set per-request
+  });
+}
+
+async function bootstrap(){
+  try{
+    setSyncStatus('saving','Loading…');
+    await waitForGoogleLibs();
+    await initGapi();
+    initTokenClient();
+
+    // Try silent token reuse if cached
+    if(accessToken && accessToken.expires_at && Date.now() < accessToken.expires_at - 60000){
+      gapi.client.setToken({access_token: accessToken.token});
+      try{
+        await loadFromDrive();
+        showAppUI();
+        return;
+      }catch(e){
+        // Token may be revoked or expired despite expires_at; fall through to sign-in
+        console.warn('Cached token failed, requesting fresh sign-in', e);
+        accessToken = null;
+        lsDel(LS_TOKEN);
+      }
+    }
+    // No valid cached token — show sign-in
+    showSignInUI();
+  }catch(e){
+    console.error('Bootstrap error', e);
+    showSignInUI('Failed to initialize Google APIs. Check your internet connection and reload.');
   }
+}
+
+function showSignInUI(errMsg){
+  document.getElementById('signin-overlay').style.display = 'flex';
+  document.getElementById('root').style.display = 'none';
+  const err = document.getElementById('signin-error');
+  if(errMsg){
+    err.textContent = errMsg;
+    err.style.display = 'block';
+  } else {
+    err.style.display = 'none';
+  }
+}
+
+function showAppUI(){
+  document.getElementById('signin-overlay').style.display = 'none';
+  document.getElementById('root').style.display = 'flex';
+  updateUserChip();
+  render();
+}
+
+function updateUserChip(){
+  if(!userInfo) return;
+  document.getElementById('user-name').textContent = userInfo.email || 'Signed in';
+  const initial = (userInfo.email || 'U').charAt(0).toUpperCase();
+  document.getElementById('user-avatar').textContent = initial;
+}
+
+window.handleSignIn = ()=>{
+  if(!tokenClient){
+    showSignInUI('Google sign-in is still loading. Please wait a moment and try again.');
+    return;
+  }
+  document.getElementById('signin-error').style.display = 'none';
+  tokenClient.callback = async (resp)=>{
+    if(resp.error){
+      showSignInUI('Sign-in failed: ' + (resp.error_description || resp.error));
+      return;
+    }
+    accessToken = {
+      token: resp.access_token,
+      expires_at: Date.now() + (resp.expires_in * 1000)
+    };
+    lsSave(LS_TOKEN, accessToken);
+    gapi.client.setToken({access_token: resp.access_token});
+
+    // Fetch user info
+    try{
+      const ures = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {Authorization: 'Bearer ' + resp.access_token}
+      });
+      if(ures.ok){
+        const u = await ures.json();
+        userInfo = {email: u.email, name: u.name};
+        lsSave(LS_USER, userInfo);
+      }
+    }catch(e){ /* non-fatal */ }
+
+    try{
+      await loadFromDrive();
+      showAppUI();
+    }catch(e){
+      console.error(e);
+      showSignInUI('Could not load ledger from Drive: ' + e.message);
+    }
+  };
+  tokenClient.requestAccessToken({prompt: accessToken ? '' : 'consent'});
 };
 
+window.handleSignOut = ()=>{
+  if(!confirm('Sign out? Your data stays safe in Google Drive.')) return;
+  if(accessToken && accessToken.token){
+    try{ google.accounts.oauth2.revoke(accessToken.token, ()=>{}); }catch(e){}
+  }
+  accessToken = null;
+  driveFileId = null;
+  userInfo = null;
+  parties = [];
+  lsDel(LS_TOKEN); lsDel(LS_FID); lsDel(LS_USER); lsDel(LS_DATA);
+  gapi.client.setToken(null);
+  showSignInUI();
+};
+
+async function findOrCreateDriveFile(){
+  // Search for existing file
+  const q = `name='${DRIVE_FILE_NAME}' and trashed=false`;
+  const resp = await gapi.client.drive.files.list({
+    q,
+    spaces: 'drive',
+    fields: 'files(id, name, modifiedTime)'
+  });
+  if(resp.result.files && resp.result.files.length > 0){
+    driveFileId = resp.result.files[0].id;
+    lsSave(LS_FID, driveFileId);
+    return {fileId: driveFileId, isNew: false};
+  }
+  // Create new file with default data
+  const metadata = {name: DRIVE_FILE_NAME, mimeType: 'application/json'};
+  const boundary = '-------ledger_boundary_' + Date.now();
+  const delim = '\r\n--' + boundary + '\r\n';
+  const closeDelim = '\r\n--' + boundary + '--';
+  const initialData = JSON.stringify(defaultData, null, 2);
+  const body =
+    delim + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
+    delim + 'Content-Type: application/json\r\n\r\n' + initialData +
+    closeDelim;
+  const createResp = await gapi.client.request({
+    path: '/upload/drive/v3/files',
+    method: 'POST',
+    params: {uploadType: 'multipart'},
+    headers: {'Content-Type': 'multipart/related; boundary=' + boundary},
+    body
+  });
+  driveFileId = createResp.result.id;
+  lsSave(LS_FID, driveFileId);
+  return {fileId: driveFileId, isNew: true};
+}
+
+async function loadFromDrive(){
+  setSyncStatus('saving','Loading…');
+  const {fileId, isNew} = await findOrCreateDriveFile();
+  if(isNew){
+    parties = JSON.parse(JSON.stringify(defaultData));
+    lastSavedSnapshot = JSON.stringify(parties);
+    lsSave(LS_DATA, parties);
+    setSyncStatus('synced','Synced');
+    showToast('Created new ledger in Drive ✓');
+    return;
+  }
+  // Download file content
+  const resp = await gapi.client.drive.files.get({
+    fileId,
+    alt: 'media'
+  });
+  let data;
+  try{
+    data = typeof resp.body === 'string' ? JSON.parse(resp.body) : resp.result;
+  }catch(e){
+    throw new Error('Drive file is corrupted: ' + e.message);
+  }
+  if(!Array.isArray(data)) throw new Error('Drive file has unexpected format.');
+  parties = data;
+  lastSavedSnapshot = JSON.stringify(parties);
+  lsSave(LS_DATA, parties);
+  setSyncStatus('synced','Synced');
+}
+
+async function saveToDriveNow(){
+  if(!driveFileId || !accessToken) return false;
+  const snapshot = JSON.stringify(parties);
+  if(snapshot === lastSavedSnapshot) return true;
+  saveInFlight = true;
+  setSyncStatus('saving','Saving…');
+  try{
+    await gapi.client.request({
+      path: '/upload/drive/v3/files/' + driveFileId,
+      method: 'PATCH',
+      params: {uploadType: 'media'},
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(parties, null, 2)
+    });
+    lastSavedSnapshot = snapshot;
+    lsSave(LS_DATA, parties);
+    unsaved = false;
+    setSyncStatus('synced','Synced');
+    saveInFlight = false;
+    // If more changes queued while we were saving, save again
+    if(saveQueued){ saveQueued = false; saveToDriveNow(); }
+    return true;
+  }catch(e){
+    saveInFlight = false;
+    console.error('Drive save error', e);
+    if(!navigator.onLine){
+      setSyncStatus('offline','Offline');
+      showToast('Offline — saved locally, will sync when online');
+    } else {
+      // Token might be expired
+      if(e.status === 401){
+        setSyncStatus('error','Auth expired');
+        showToast('Session expired. Please sign in again.', true);
+        accessToken = null; lsDel(LS_TOKEN);
+        setTimeout(showSignInUI, 1500);
+      } else {
+        setSyncStatus('error','Save failed');
+        showToast('Save failed — try again', true);
+      }
+    }
+    lsSave(LS_DATA, parties); // always persist locally
+    return false;
+  }
+}
+
+let saveDebounceTimer = null;
+function scheduleSave(){
+  unsaved = true;
+  if(saveInFlight){ saveQueued = true; return; }
+  setSyncStatus('saving','Pending…');
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(()=>{
+    saveToDriveNow();
+  }, 1200);
+}
+
+// Save when going online again
+window.addEventListener('online', ()=>{
+  if(unsaved && accessToken) saveToDriveNow();
+});
+window.addEventListener('offline', ()=>{
+  setSyncStatus('offline','Offline');
+});
+// Save before leaving page
+window.addEventListener('beforeunload', (e)=>{
+  if(unsaved && accessToken && driveFileId){
+    // Synchronous beacon save (best effort)
+    try{
+      const blob = new Blob([JSON.stringify(parties, null, 2)], {type:'application/json'});
+      // Note: Drive API doesn't support sendBeacon directly; this is best-effort
+      navigator.sendBeacon &&
+        navigator.sendBeacon('https://www.googleapis.com/upload/drive/v3/files/' + driveFileId + '?uploadType=media&access_token=' + accessToken.token, blob);
+    }catch(_){}
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
+
+const markUnsaved = () => { scheduleSave(); };
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI ACTIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
 window.toggleDark = () => {
   darkMode=!darkMode;
   document.body.classList.toggle('dark-mode',darkMode);
   lsSave(LS_DARK,darkMode);
 };
-window.goSummary     = ()=>{ selectedParty=null; entryModal=null; render(); };
+window.goSummary     = ()=>{ selectedParty=null; entryModal=null; closeSidebarMobile(); render(); };
 window.filterParties = q =>{ searchQ=q; renderSidebar(); };
-window.selectParty   = i =>{ selectedParty=i; entryModal=null; render(); };
+window.selectParty   = i =>{ selectedParty=i; entryModal=null; closeSidebarMobile(); render(); };
 
+window.toggleSidebar = ()=>{
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('mobile-open');
+  ov.classList.toggle('active');
+};
+function closeSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
 const render = ()=>{ renderSidebar(); renderContent(); };
 
 const renderSidebar = () => {
@@ -293,7 +698,7 @@ const renderSidebar = () => {
     const bc=bal>0?'badge-dr':bal<0?'badge-cr':'badge-nil';
     return `<div class="party-item ${selectedParty===idx?'active':''}">
       <div class="party-main" onclick="selectParty(${idx})">
-        <div class="party-name">${p.name}</div>
+        <div class="party-name">${escapeHtml(p.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
           <span class="badge ${bc}">${bal>0?'DR':bal<0?'CR':'NIL'}</span>
           ${bal!==0?`<span style="font-size:10px;color:var(--text-muted)">${fmt(bal)}</span>`:''}
@@ -304,6 +709,10 @@ const renderSidebar = () => {
   }).join('');
 };
 
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 const renderContent = () => {
   const area=document.getElementById('view-area');
   const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
@@ -313,6 +722,7 @@ const renderContent = () => {
     renderSummary(area);
   } else {
     const p=parties[selectedParty];
+    if(!p){ selectedParty=null; renderContent(); return; }
     document.getElementById('print-title').textContent='Ganesh Cold Storage & Ice Mills — Ledger: '+p.name;
     document.getElementById('print-sub').textContent='Printed on '+today;
     renderParty(area,p);
@@ -344,16 +754,16 @@ const renderSummary = area => {
       <table>
         <thead><tr>
           <th style="width:5%">#</th>
-          <th style="width:60%">Party name</th>
-          <th style="width:22%">Balance</th>
-          <th style="width:13%">Status</th>
+          <th style="width:55%">Party name</th>
+          <th style="width:25%">Balance</th>
+          <th style="width:15%">Status</th>
         </tr></thead>
         <tbody>
           ${list.map((p,i)=>{
             const idx=parties.indexOf(p),bal=getBal(p.entries);
             return `<tr onclick="selectParty(${idx})" style="cursor:pointer">
               <td style="color:var(--text-muted)">${i+1}</td>
-              <td style="font-weight:500">${p.name}</td>
+              <td style="font-weight:500">${escapeHtml(p.name)}</td>
               <td class="${bal>0?'dr-amt':'cr-amt'}">${fmt(Math.abs(bal))}</td>
               <td><span class="badge ${bal>0?'badge-dr':'badge-cr'}">${bal>0?'DR':'CR'}</span></td>
             </tr>`;
@@ -379,8 +789,8 @@ const renderParty = (area,p) => {
     const rbc=run>0?'badge-dr':run<0?'badge-cr':'badge-nil';
     return `<tr>
       <td style="color:var(--text-muted)">${i+1}</td>
-      <td style="color:var(--text-secondary)">${excelToDate(e.date)}</td>
-      <td>${e.particular}</td>
+      <td style="color:var(--text-secondary);white-space:nowrap">${excelToDate(e.date)}</td>
+      <td>${escapeHtml(e.particular)}</td>
       <td class="dr-amt">${e.dr>0?fmt(e.dr):'—'}</td>
       <td class="cr-amt">${e.cr>0?fmt(e.cr):'—'}</td>
       <td style="font-weight:500">${fmt(Math.abs(run))}</td>
@@ -395,12 +805,9 @@ const renderParty = (area,p) => {
   }).join('');
 
   area.innerHTML=`
-    ${unsaved?`<div class="unsaved-bar no-print">⚠ Unsaved changes
-      <button class="btn-primary" style="padding:3px 10px;font-size:11px" onclick="manualSave()">Save now</button>
-    </div>`:''}
     <div class="party-header">
       <div class="party-header-left">
-        <h2>${p.name}</h2>
+        <h2>${escapeHtml(p.name)}</h2>
         <div class="party-header-stats">
           <span>${p.entries.length} transactions</span>
           <span>Total DR: <span class="dr-amt">${fmt(tDr)}</span></span>
@@ -433,12 +840,12 @@ const renderParty = (area,p) => {
         <thead><tr>
           <th style="width:4%">#</th>
           <th style="width:10%">Date</th>
-          <th style="width:28%">Particular</th>
+          <th style="width:24%">Particular</th>
           <th style="width:12%">Debit</th>
           <th style="width:12%">Credit</th>
           <th style="width:12%">Balance</th>
           <th style="width:9%">Type</th>
-          <th style="width:13%" class="no-print">Actions</th>
+          <th style="width:17%" class="no-print">Actions</th>
         </tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr>
@@ -453,7 +860,9 @@ const renderParty = (area,p) => {
     </div>`;
 };
 
-// ── Delete party confirmation ─────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARTY DELETE
+   ═══════════════════════════════════════════════════════════════════════════ */
 window.confirmDeleteParty = idx => {
   const p=parties[idx];
   const bal=getBal(p.entries);
@@ -462,7 +871,7 @@ window.confirmDeleteParty = idx => {
   div.innerHTML=`<div class="form-overlay" id="del-party-overlay">
     <div class="confirm-card">
       <h3>Delete party?</h3>
-      <p>You are about to permanently delete <strong>${p.name}</strong>.</p>
+      <p>You are about to permanently delete <strong>${escapeHtml(p.name)}</strong>.</p>
       <p style="margin-top:6px">This party has <strong>${p.entries.length} transaction(s)</strong>${bal!==0?` and an outstanding balance of <strong class="${bal>0?'dr-amt':'cr-amt'}">${fmt(Math.abs(bal))} ${bal>0?'DR':'CR'}</strong>`:''}.</p>
       <p style="margin-top:10px;color:var(--dr-text);font-size:11px">⚠ This action cannot be undone.</p>
       <div class="form-btns">
@@ -480,7 +889,6 @@ window.closeDelParty = () => { const el=document.getElementById('del-party-modal
 window.executeDeleteParty = idx => {
   const name=parties[idx].name;
   parties.splice(idx,1);
-  // if we were viewing that party, go to summary
   if(selectedParty===idx) selectedParty=null;
   else if(selectedParty>idx) selectedParty--;
   closeDelParty();
@@ -489,7 +897,9 @@ window.executeDeleteParty = idx => {
   showToast(`"${name}" deleted`);
 };
 
-// ── Entry modal ───────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENTRY MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
 const renderEntryModal = () => {
   const old=document.getElementById('entry-modal-host'); if(old) old.remove();
   const isEdit=entryModal&&entryModal.mode==='edit';
@@ -498,16 +908,16 @@ const renderEntryModal = () => {
   div.innerHTML=`<div class="form-overlay" id="entry-overlay">
     <div class="form-card">
       <h3>${isEdit?'Edit transaction':'Add transaction'}</h3>
-      <div class="form-sub">${parties[selectedParty].name}</div>
+      <div class="form-sub">${escapeHtml(parties[selectedParty].name)}</div>
       <div class="form-row"><label>Date</label>
         <input type="date" id="e-date" value="${isEdit?excelToInput(e.date):''}"/></div>
       <div class="form-row"><label>Particular / Description</label>
-        <input type="text" id="e-part" placeholder="e.g. INVOICE 350" value="${isEdit?e.particular:''}"/></div>
+        <input type="text" id="e-part" placeholder="e.g. INVOICE 350" value="${isEdit?escapeHtml(e.particular):''}"/></div>
       <div class="form-grid">
         <div class="form-row"><label>Debit (DR) ₹</label>
-          <input type="number" id="e-dr" placeholder="0" min="0" value="${isEdit&&e.dr>0?e.dr:''}"/></div>
+          <input type="number" id="e-dr" placeholder="0" min="0" inputmode="decimal" value="${isEdit&&e.dr>0?e.dr:''}"/></div>
         <div class="form-row"><label>Credit (CR) ₹</label>
-          <input type="number" id="e-cr" placeholder="0" min="0" value="${isEdit&&e.cr>0?e.cr:''}"/></div>
+          <input type="number" id="e-cr" placeholder="0" min="0" inputmode="decimal" value="${isEdit&&e.cr>0?e.cr:''}"/></div>
       </div>
       <div class="form-btns">
         <button class="btn-cancel" onclick="closeEntryModal()">Cancel</button>
@@ -548,7 +958,9 @@ window.delEntry = i => {
   markUnsaved(); render();
 };
 
-// ── Add party ─────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADD PARTY
+   ═══════════════════════════════════════════════════════════════════════════ */
 window.openAddParty = () => {
   const old=document.getElementById('party-modal-host'); if(old) old.remove();
   const div=document.createElement('div'); div.id='party-modal-host';
@@ -557,7 +969,7 @@ window.openAddParty = () => {
       <h3>Add new party</h3>
       <div class="form-sub">Will be added to the ledger</div>
       <div class="form-row"><label>Party name</label>
-        <input type="text" id="np-name" placeholder="e.g. XYZ TRADERS" style="text-transform:uppercase"/></div>
+        <input type="text" id="np-name" placeholder="e.g. XYZ TRADERS" style="text-transform:uppercase" autocapitalize="characters"/></div>
       <div class="form-btns">
         <button class="btn-cancel" onclick="closeAddParty()">Cancel</button>
         <button class="btn-primary" onclick="saveParty()">Add party</button>
@@ -578,6 +990,18 @@ window.saveParty = () => {
   markUnsaved(); render();
 };
 
-updateSaveBtn();
-render();
+/* ═══════════════════════════════════════════════════════════════════════════
+   STARTUP
+   ═══════════════════════════════════════════════════════════════════════════ */
+// Hide both UIs until bootstrap completes
+document.getElementById('signin-overlay').style.display = 'flex';
+document.getElementById('signin-error').style.display = 'none';
+
+// Run bootstrap once DOM + scripts are ready
+window.addEventListener('load', ()=>{
+  // Small delay to let async google scripts load
+  setTimeout(bootstrap, 200);
+});
 </script>
+</body>
+</html>
