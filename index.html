@@ -1,0 +1,583 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg-page:#F4F4F1;--bg-card:#fff;--bg-sidebar:#fff;--bg-th:#F0EEE8;--bg-hover:#F7F6F2;--bg-active:#E6F1FB;--bg-metric:#F0EEE8;
+  --text-primary:#1a1a18;--text-secondary:#6b6b65;--text-muted:#9a9a93;
+  --border:#C8C6BE;--border-light:#E0DED6;
+  --dr-bg:#FAECE7;--dr-text:#7A2E10;--cr-bg:#EAF3DE;--cr-text:#2E5A0A;--nil-bg:#EEEDEB;--nil-text:#5F5E5A;
+  --blue:#185FA5;--blue-light:#E6F1FB;--input-bg:#F7F6F2;
+}
+.dark-mode{
+  --bg-page:#1C1C1A;--bg-card:#262623;--bg-sidebar:#222220;--bg-th:#2E2E2B;--bg-hover:#2E2E2B;--bg-active:#0C3258;--bg-metric:#2A2A27;
+  --text-primary:#E8E6DE;--text-secondary:#A0A099;--text-muted:#6b6b65;
+  --border:#3A3A36;--border-light:#303030;
+  --dr-bg:#3D1A0E;--dr-text:#F5A88A;--cr-bg:#1A2E0E;--cr-text:#90C45A;--nil-bg:#2A2A27;--nil-text:#9a9a93;
+  --blue:#378ADD;--blue-light:#0C2A44;--input-bg:#2E2E2B;
+}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg-page);transition:background 0.2s;}
+input,select,button{font-family:inherit;}
+.app{min-height:620px;display:flex;flex-direction:column;}
+.header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.header-title{display:flex;align-items:center;gap:8px;}
+.header-title h1{font-size:14px;font-weight:600;color:var(--text-primary);}
+.header-stats{display:flex;gap:12px;font-size:11px;color:var(--text-secondary);}
+.header-right{display:flex;align-items:center;gap:6px;}
+.hdr-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 11px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg-card);color:var(--text-secondary);transition:all 0.15s;white-space:nowrap;}
+.hdr-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
+.hdr-btn.active{background:var(--blue-light);color:var(--blue);border-color:var(--blue);}
+.save-btn{background:var(--blue);color:#fff;border-color:var(--blue);}
+.save-btn:hover{background:#0f4a8a;color:#fff;}
+.save-btn.saved{background:#2E6B10;border-color:#2E6B10;color:#fff;}
+.dark-toggle{width:34px;height:20px;border-radius:10px;border:1px solid var(--border);background:var(--bg-metric);cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;}
+.dark-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--text-secondary);top:2px;left:2px;transition:all 0.2s;}
+.dark-mode .dark-toggle::after{left:16px;background:var(--blue);}
+.main{display:flex;flex:1;}
+.sidebar{width:210px;min-width:210px;background:var(--bg-sidebar);border-right:1px solid var(--border);overflow-y:auto;max-height:572px;display:flex;flex-direction:column;}
+.sidebar-search{padding:8px 10px;border-bottom:1px solid var(--border);}
+.sidebar-search input{width:100%;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
+.sidebar-search input:focus{outline:none;border-color:var(--blue);}
+.party-list-wrap{flex:1;overflow-y:auto;}
+.party-item{padding:8px 10px 8px 12px;cursor:pointer;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;gap:4px;}
+.party-item:hover{background:var(--bg-hover);}
+.party-item:hover .party-del-btn{opacity:1;}
+.party-item.active{background:var(--bg-active);}
+.party-item.active .party-del-btn{opacity:1;}
+.party-main{display:flex;flex-direction:column;flex:1;min-width:0;cursor:pointer;}
+.party-name{font-size:12px;color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.party-del-btn{opacity:0;flex-shrink:0;border:1px solid transparent;background:none;cursor:pointer;font-size:11px;font-weight:500;padding:2px 6px;border-radius:4px;color:var(--dr-text);transition:all 0.15s;line-height:1.4;}
+.party-del-btn:hover{background:var(--dr-bg);border-color:var(--dr-text);}
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;border:1px solid transparent;}
+.badge-dr{background:var(--dr-bg);color:var(--dr-text);}
+.badge-cr{background:var(--cr-bg);color:var(--cr-text);}
+.badge-nil{background:var(--nil-bg);color:var(--nil-text);}
+.new-party-btn{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;padding:7px;border:1px dashed var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;margin:8px;background:none;width:calc(100% - 16px);transition:all 0.1s;flex-shrink:0;}
+.new-party-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
+.content{flex:1;padding:14px;overflow-y:auto;max-height:572px;background:var(--bg-page);}
+.summary-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.metric-card{background:var(--bg-metric);border-radius:8px;padding:12px 14px;border:1px solid var(--border-light);}
+.metric-label{font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;}
+.metric-val{font-size:18px;font-weight:600;color:var(--text-primary);}
+.metric-val.red{color:var(--dr-text);}
+.metric-val.green{color:var(--cr-text);}
+.party-header{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.party-header-left h2{font-size:14px;font-weight:600;color:var(--text-primary);}
+.party-header-stats{display:flex;gap:14px;margin-top:4px;font-size:11px;color:var(--text-secondary);}
+.balance-big{font-size:19px;font-weight:600;}
+.balance-big.red{color:var(--dr-text);}
+.balance-big.green{color:var(--cr-text);}
+.party-header-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.del-party-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:4px 9px;border:1px solid var(--dr-text);border-radius:5px;color:var(--dr-text);background:none;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.del-party-btn:hover{background:var(--dr-bg);}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.section-header h3{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;}
+.section-actions{display:flex;gap:6px;}
+.action-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);cursor:pointer;background:var(--bg-card);transition:all 0.1s;white-space:nowrap;}
+.action-btn:hover{background:var(--bg-hover);color:var(--text-primary);}
+.tbl-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+.tbl-wrap thead th{background:var(--bg-th);padding:8px 10px;text-align:left;font-weight:600;font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);border-right:1px solid var(--border-light);}
+.tbl-wrap thead th:last-child{border-right:none;}
+.tbl-wrap tbody td{padding:7px 10px;color:var(--text-primary);border-bottom:1px solid var(--border-light);border-right:1px solid var(--border-light);vertical-align:middle;}
+.tbl-wrap tbody td:last-child{border-right:none;}
+.tbl-wrap tbody tr:last-child td{border-bottom:none;}
+.tbl-wrap tbody tr:hover{background:var(--bg-hover);}
+.tbl-wrap tfoot td{padding:8px 10px;background:var(--bg-th);border-top:1px solid var(--border);font-weight:600;font-size:11px;border-right:1px solid var(--border-light);}
+.tbl-wrap tfoot td:last-child{border-right:none;}
+.dr-amt{color:var(--dr-text);font-weight:500;}
+.cr-amt{color:var(--cr-text);font-weight:500;}
+.row-actions{display:flex;gap:4px;justify-content:center;}
+.row-btn{display:inline-flex;align-items:center;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;transition:all 0.15s;}
+.row-btn.edit-btn{color:var(--blue);}
+.row-btn.edit-btn:hover{background:var(--blue-light);border-color:var(--blue);}
+.row-btn.del-btn{color:var(--dr-text);}
+.row-btn.del-btn:hover{background:var(--dr-bg);border-color:var(--dr-text);}
+.unsaved-bar{background:#FFF8E6;border:1px solid #F0D080;border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#7A5500;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.dark-mode .unsaved-bar{background:#2A2200;border-color:#5A4500;color:#F0C040;}
+.form-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:200;}
+.form-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:20px;width:330px;max-width:95vw;}
+.form-card h3{font-size:14px;font-weight:600;margin-bottom:3px;color:var(--text-primary);}
+.form-sub{font-size:11px;color:var(--text-muted);margin-bottom:14px;}
+.form-row{margin-bottom:10px;}
+.form-row label{display:block;font-size:11px;color:var(--text-secondary);margin-bottom:3px;font-weight:500;}
+.form-row input{width:100%;font-size:12px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:var(--input-bg);color:var(--text-primary);}
+.form-row input:focus{outline:none;border-color:var(--blue);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-btns{display:flex;gap:7px;margin-top:14px;justify-content:flex-end;}
+.btn-primary{background:var(--blue);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
+.btn-primary:hover{opacity:0.88;}
+.btn-danger{background:var(--dr-text);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500;}
+.btn-danger:hover{opacity:0.88;}
+.btn-cancel{background:transparent;border:1px solid var(--border);padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-primary);}
+.btn-cancel:hover{background:var(--bg-hover);}
+.confirm-card{background:var(--bg-card);border-radius:10px;border:1px solid var(--border);padding:22px;width:340px;max-width:95vw;}
+.confirm-card h3{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--dr-text);}
+.confirm-card p{font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:4px;}
+.confirm-card strong{color:var(--text-primary);}
+.toast{position:fixed;bottom:16px;right:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text-primary);z-index:999;box-shadow:0 2px 10px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+@media print{
+  .no-print{display:none!important;}
+  .main{display:block;}
+  .sidebar{display:none;}
+  .content{max-height:unset;overflow:visible;padding:0;}
+  .header{border:none;padding:0 0 10px 0;}
+  .tbl-wrap{border:1px solid #999;border-radius:0;}
+  .tbl-wrap table{font-size:11px;}
+  .tbl-wrap thead th{background:#eee!important;color:#444!important;border-color:#bbb!important;}
+  .tbl-wrap tbody td{border-color:#ddd!important;}
+  .tbl-wrap tfoot td{background:#eee!important;border-color:#bbb!important;}
+  .party-header,.metric-card{border-color:#bbb;}
+  .badge-dr{background:#fce8e2!important;color:#7a2e10!important;}
+  .badge-cr{background:#e2f0d4!important;color:#2e5a0a!important;}
+  .print-header{display:block!important;font-size:15px;font-weight:600;margin-bottom:3px;}
+  .print-sub{display:block!important;font-size:11px;color:#666;margin-bottom:12px;}
+  body{background:#fff!important;}
+}
+.print-header,.print-sub{display:none;}
+</style>
+
+<div class="app" id="root">
+  <div class="header no-print">
+    <div class="header-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary)"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <h1>Ganesh Cold Storage — Accounts Ledger</h1>
+    </div>
+    <div class="header-stats" id="header-stats"></div>
+    <div class="header-right">
+      <button class="hdr-btn" id="summary-nav-btn" onclick="goSummary()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Summary
+      </button>
+      <button class="hdr-btn save-btn" id="save-btn" onclick="manualSave()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save
+      </button>
+      <button class="dark-toggle" onclick="toggleDark()" aria-label="Toggle dark mode"></button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="sidebar no-print">
+      <div class="sidebar-search">
+        <input type="text" placeholder="Search party…" oninput="filterParties(this.value)" />
+      </div>
+      <div class="party-list-wrap" id="party-list"></div>
+      <button class="new-party-btn" onclick="openAddParty()">+ Add new party</button>
+    </div>
+    <div class="content">
+      <div class="print-header" id="print-title"></div>
+      <div class="print-sub" id="print-sub"></div>
+      <div id="view-area"></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY  = 'gcs_ledger_v8';
+const LS_DARK = 'gcs_ledger_dark';
+
+const lsSave = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } };
+const lsLoad = (k,d) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } };
+
+const defaultData = [
+  {name:'BRILL INTERNATIONAL',entries:[{date:46112,particular:'INVOICE 318',dr:1227715,cr:0},{date:46142,particular:'RTGS KOTAK',dr:0,cr:200000}]},
+  {name:'ROYAL INTERNATIONAL',entries:[{date:46112,particular:'INVOICE 309',dr:119501,cr:0}]},
+  {name:'4S QUALITY',entries:[{date:46111,particular:'INVOICE 299',dr:16419,cr:0},{date:46112,particular:'INVOICE 308',dr:103048,cr:0}]},
+  {name:'EVERSHELL OVERSEAS',entries:[{date:46148,particular:'INVOICE 19',dr:36108,cr:0},{date:46151,particular:'INVOICE 20',dr:72216,cr:0}]},
+  {name:'SANJAY KR NIKHIL KR',entries:[{date:46112,particular:'INVOICE 313',dr:220450,cr:0},{date:46142,particular:'NEFT KOTAK',dr:0,cr:140000},{date:46144,particular:'INVOICE 15',dr:25307,cr:0}]},
+  {name:'SPECIAL DRYFRUIT',entries:[{date:46115,particular:'INVOICE 05',dr:59496,cr:0}]},
+  {name:'GANESHA TRADERS',entries:[{date:46088,particular:'INVOICE 294',dr:65195,cr:0},{date:46269,particular:'CHQ KOTAK',dr:0,cr:65195},{date:46144,particular:'INVOICE 13',dr:16284,cr:0},{date:46151,particular:'INVOICE 21',dr:27990,cr:0}]},
+  {name:'RIDHIMA INT',entries:[{date:46144,particular:'INVOICE 14',dr:36108,cr:0}]},
+  {name:'ANKUR GOYAL',entries:[{date:46111,particular:'INVOICE 300',dr:31871,cr:0}]},
+  {name:'BHARAT STORE',entries:[{date:46111,particular:'INVOICE 301',dr:9118,cr:0},{date:46144,particular:'INVOICE 16',dr:5209,cr:0}]},
+  {name:'RCB FOODS',entries:[{date:46111,particular:'INVOICE 306',dr:9081,cr:0}]},
+  {name:'VISHNU KR LAVESH KR',entries:[{date:46115,particular:'INVOICE 06',dr:4780,cr:0}]},
+  {name:'RAMPRASAD BISHAN SWARUP',entries:[{date:46111,particular:'INVOICE 305',dr:3059,cr:0}]},
+  {name:'SINGHAL FOOD',entries:[{date:46115,particular:'INVOICE 07',dr:850,cr:0}]},
+  {name:'BHARAT DRYFRUIT',entries:[{date:46113,particular:'INVOICE 2',dr:10061,cr:0},{date:46149,particular:'IMPS',dr:0,cr:10061}]},
+  {name:'BHARAT PRAKRITI',entries:[{date:46113,particular:'INVOICE 03',dr:6417,cr:0},{date:46149,particular:'IMPS',dr:0,cr:6417}]},
+  {name:'JM SPICES',entries:[{date:46111,particular:'INVOICE 302',dr:907,cr:0},{date:46125,particular:'INVOICE 09',dr:2454,cr:0},{date:46128,particular:'CASH',dr:0,cr:2454},{date:46115,particular:'CASH',dr:0,cr:907}]},
+  {name:'S KRITIKA',entries:[{date:46111,particular:'INVOICE 303',dr:6662,cr:0},{date:46113,particular:'INVOICE 01',dr:11673,cr:0},{date:46121,particular:'CASH',dr:0,cr:18335}]},
+  {name:'GOYAL TRADING',entries:[{date:46111,particular:'INVOICE 304',dr:26837,cr:0},{date:46122,particular:'KOTAK IMPS',dr:0,cr:26837}]},
+  {name:'RRR FOODS',entries:[{date:46112,particular:'INVOICE 307',dr:7824,cr:0},{date:46119,particular:'KOTAK',dr:0,cr:7824},{date:46127,particular:'INVOICE 10',dr:2866,cr:0},{date:46128,particular:'KOTAK NEFT',dr:0,cr:2866}]},
+  {name:'INDIAN HERB',entries:[{date:46112,particular:'INVOICE 310',dr:12036,cr:0},{date:46120,particular:'KOTAK CASH DEPOSIT',dr:0,cr:12036}]},
+  {name:'SANGAL FOODS',entries:[{date:46112,particular:'INVOICE 311',dr:1663,cr:0},{date:46119,particular:'YES BANK NEFT',dr:0,cr:1663}]},
+  {name:'SHREE MURTI BUSINESS',entries:[{date:46112,particular:'INVOICE 312',dr:10184,cr:0},{date:46115,particular:'CASH',dr:0,cr:10184}]},
+  {name:'SH NARYAN TRADING',entries:[{date:46112,particular:'INVOICE 315',dr:1690,cr:0},{date:46151,particular:'IMPS KOTAK',dr:0,cr:1690}]},
+  {name:'SP FOODS',entries:[{date:46112,particular:'INVOICE 316',dr:1855,cr:0},{date:46127,particular:'KOTAK IMPS',dr:0,cr:1855}]},
+  {name:'MODERN RETAIL PACKERS',entries:[{date:46112,particular:'INVOICE 317',dr:19683,cr:0},{date:46238,particular:'KOTAK PUNEET JAIN',dr:0,cr:21324},{date:46122,particular:'INVOICE 08',dr:2248,cr:0},{date:46150,particular:'KOTAK PUNEET JAIN',dr:0,cr:600},{date:0,particular:'DISC',dr:0,cr:7}]},
+  {name:'RADHEY KRISHNA',entries:[{date:46133,particular:'INVOICE 11',dr:729,cr:0},{date:46149,particular:'IMPS',dr:0,cr:729}]},
+  {name:'DRYFRUITVALA',entries:[{date:46144,particular:'INVOICE 12',dr:25662,cr:0},{date:46150,particular:'KOTAK IMPS',dr:0,cr:25662}]},
+  {name:'VISHAL AGRO IMPEX',entries:[{date:46148,particular:'INVOICE 18',dr:108324,cr:0},{date:46149,particular:'IMPS',dr:0,cr:108324}]}
+];
+
+const excelToDate = n => {
+  if(!n||isNaN(n)) return '—';
+  return new Date(Date.UTC(1899,11,30)+n*86400000).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
+};
+const excelToInput = n => {
+  if(!n||isNaN(n)) return '';
+  return new Date(Date.UTC(1899,11,30)+n*86400000).toISOString().split('T')[0];
+};
+const dateToExcel = s => {
+  if(!s) return 0;
+  return Math.round((new Date(s)-new Date(Date.UTC(1899,11,30)))/86400000);
+};
+const fmt    = n => '₹'+Math.abs(n).toLocaleString('en-IN');
+const getBal = e => e.reduce((s,x)=>s+(x.dr||0)-(x.cr||0),0);
+
+const showToast = (msg,err) => {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=err?'var(--dr-text)':'var(--border)';
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove('show'),2500);
+};
+
+let parties       = lsLoad(LS_KEY, JSON.parse(JSON.stringify(defaultData)));
+let selectedParty = null;
+let searchQ       = '';
+let darkMode      = lsLoad(LS_DARK, false);
+let entryModal    = null;
+let unsaved       = false;
+
+if(darkMode) document.body.classList.add('dark-mode');
+
+window.manualSave = () => {
+  const ok=lsSave(LS_KEY,parties);
+  if(ok){ unsaved=false; updateSaveBtn(); showToast('✓ All changes saved'); }
+  else   { showToast('⚠ Save failed — storage may be full',true); }
+};
+
+const markUnsaved = () => { unsaved=true; updateSaveBtn(); };
+
+const updateSaveBtn = () => {
+  const btn=document.getElementById('save-btn');
+  if(!btn) return;
+  if(!unsaved){
+    btn.className='hdr-btn save-btn saved';
+    btn.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+  } else {
+    btn.className='hdr-btn save-btn';
+    btn.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save`;
+  }
+};
+
+window.toggleDark = () => {
+  darkMode=!darkMode;
+  document.body.classList.toggle('dark-mode',darkMode);
+  lsSave(LS_DARK,darkMode);
+};
+window.goSummary     = ()=>{ selectedParty=null; entryModal=null; render(); };
+window.filterParties = q =>{ searchQ=q; renderSidebar(); };
+window.selectParty   = i =>{ selectedParty=i; entryModal=null; render(); };
+
+const render = ()=>{ renderSidebar(); renderContent(); };
+
+const renderSidebar = () => {
+  const totalOut=parties.reduce((s,p)=>{ const b=getBal(p.entries); return b>0?s+b:s; },0);
+  document.getElementById('header-stats').innerHTML=
+    `<span><strong style="color:var(--text-primary)">${parties.length}</strong> parties</span>
+     <span>Outstanding: <strong style="color:var(--dr-text)">${fmt(totalOut)}</strong></span>`;
+  const btn=document.getElementById('summary-nav-btn');
+  if(btn) btn.className='hdr-btn'+(selectedParty===null?' active':'');
+
+  const sorted=[...parties]
+    .filter(p=>p.name.toLowerCase().includes(searchQ.toLowerCase()))
+    .sort((a,b)=>getBal(b.entries)-getBal(a.entries));
+
+  document.getElementById('party-list').innerHTML=sorted.map(p=>{
+    const idx=parties.indexOf(p), bal=getBal(p.entries);
+    const bc=bal>0?'badge-dr':bal<0?'badge-cr':'badge-nil';
+    return `<div class="party-item ${selectedParty===idx?'active':''}">
+      <div class="party-main" onclick="selectParty(${idx})">
+        <div class="party-name">${p.name}</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+          <span class="badge ${bc}">${bal>0?'DR':bal<0?'CR':'NIL'}</span>
+          ${bal!==0?`<span style="font-size:10px;color:var(--text-muted)">${fmt(bal)}</span>`:''}
+        </div>
+      </div>
+      <button class="party-del-btn" onclick="confirmDeleteParty(${idx})" title="Delete party">✕</button>
+    </div>`;
+  }).join('');
+};
+
+const renderContent = () => {
+  const area=document.getElementById('view-area');
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  if(selectedParty===null){
+    document.getElementById('print-title').textContent='Ganesh Cold Storage & Ice Mills — Account Summary';
+    document.getElementById('print-sub').textContent='Printed on '+today;
+    renderSummary(area);
+  } else {
+    const p=parties[selectedParty];
+    document.getElementById('print-title').textContent='Ganesh Cold Storage & Ice Mills — Ledger: '+p.name;
+    document.getElementById('print-sub').textContent='Printed on '+today;
+    renderParty(area,p);
+  }
+  if(entryModal) renderEntryModal();
+};
+
+const renderSummary = area => {
+  const totalOut=parties.reduce((s,p)=>{ const b=getBal(p.entries); return b>0?s+b:s; },0);
+  const withBal=parties.filter(p=>getBal(p.entries)!==0).length;
+  const cleared=parties.filter(p=>getBal(p.entries)===0).length;
+  const list=[...parties].filter(p=>getBal(p.entries)!==0).sort((a,b)=>getBal(b.entries)-getBal(a.entries));
+  area.innerHTML=`
+    <div class="summary-cards">
+      <div class="metric-card"><div class="metric-label">Total outstanding</div><div class="metric-val red">${fmt(totalOut)}</div></div>
+      <div class="metric-card"><div class="metric-label">Parties with balance</div><div class="metric-val">${withBal} of ${parties.length}</div></div>
+      <div class="metric-card"><div class="metric-label">Accounts cleared</div><div class="metric-val green">${cleared}</div></div>
+    </div>
+    <div class="section-header">
+      <h3>Pending balances — ${list.length} parties</h3>
+      <div class="section-actions no-print">
+        <button class="action-btn" onclick="window.print()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:5%">#</th>
+          <th style="width:60%">Party name</th>
+          <th style="width:22%">Balance</th>
+          <th style="width:13%">Status</th>
+        </tr></thead>
+        <tbody>
+          ${list.map((p,i)=>{
+            const idx=parties.indexOf(p),bal=getBal(p.entries);
+            return `<tr onclick="selectParty(${idx})" style="cursor:pointer">
+              <td style="color:var(--text-muted)">${i+1}</td>
+              <td style="font-weight:500">${p.name}</td>
+              <td class="${bal>0?'dr-amt':'cr-amt'}">${fmt(Math.abs(bal))}</td>
+              <td><span class="badge ${bal>0?'badge-dr':'badge-cr'}">${bal>0?'DR':'CR'}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot><tr>
+          <td colspan="2">Total outstanding (DR)</td>
+          <td class="dr-amt">${fmt(totalOut)}</td><td></td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+};
+
+const renderParty = (area,p) => {
+  const idx=parties.indexOf(p);
+  const tDr=p.entries.reduce((s,e)=>s+(e.dr||0),0);
+  const tCr=p.entries.reduce((s,e)=>s+(e.cr||0),0);
+  const bal=tDr-tCr;
+  const bc=bal>0?'badge-dr':bal<0?'badge-cr':'badge-nil';
+  let run=0;
+  const rows=p.entries.map((e,i)=>{
+    run+=(e.dr||0)-(e.cr||0);
+    const rbc=run>0?'badge-dr':run<0?'badge-cr':'badge-nil';
+    return `<tr>
+      <td style="color:var(--text-muted)">${i+1}</td>
+      <td style="color:var(--text-secondary)">${excelToDate(e.date)}</td>
+      <td>${e.particular}</td>
+      <td class="dr-amt">${e.dr>0?fmt(e.dr):'—'}</td>
+      <td class="cr-amt">${e.cr>0?fmt(e.cr):'—'}</td>
+      <td style="font-weight:500">${fmt(Math.abs(run))}</td>
+      <td><span class="badge ${rbc}">${run>0?'DR':run<0?'CR':'NIL'}</span></td>
+      <td class="no-print">
+        <div class="row-actions">
+          <button class="row-btn edit-btn" onclick="openEditEntry(${i})">Edit</button>
+          <button class="row-btn del-btn" onclick="delEntry(${i})">Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML=`
+    ${unsaved?`<div class="unsaved-bar no-print">⚠ Unsaved changes
+      <button class="btn-primary" style="padding:3px 10px;font-size:11px" onclick="manualSave()">Save now</button>
+    </div>`:''}
+    <div class="party-header">
+      <div class="party-header-left">
+        <h2>${p.name}</h2>
+        <div class="party-header-stats">
+          <span>${p.entries.length} transactions</span>
+          <span>Total DR: <span class="dr-amt">${fmt(tDr)}</span></span>
+          <span>Total CR: <span class="cr-amt">${fmt(tCr)}</span></span>
+        </div>
+      </div>
+      <div class="party-header-right">
+        <div>
+          <div class="balance-big ${bal>0?'red':bal<0?'green':''}">${fmt(Math.abs(bal))}</div>
+          <span class="badge ${bc}" style="margin-top:5px;display:inline-block">${bal>0?'Debit balance':bal<0?'Credit balance':'Settled'}</span>
+        </div>
+        <button class="del-party-btn no-print" onclick="confirmDeleteParty(${idx})">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete party
+        </button>
+      </div>
+    </div>
+    <div class="section-header">
+      <h3>Transactions</h3>
+      <div class="section-actions no-print">
+        <button class="action-btn" onclick="openAddEntry()">+ Add transaction</button>
+        <button class="action-btn" onclick="window.print()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:4%">#</th>
+          <th style="width:10%">Date</th>
+          <th style="width:28%">Particular</th>
+          <th style="width:12%">Debit</th>
+          <th style="width:12%">Credit</th>
+          <th style="width:12%">Balance</th>
+          <th style="width:9%">Type</th>
+          <th style="width:13%" class="no-print">Actions</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td colspan="3">Total</td>
+          <td class="dr-amt">${fmt(tDr)}</td>
+          <td class="cr-amt">${fmt(tCr)}</td>
+          <td class="${bal>0?'dr-amt':bal<0?'cr-amt':''}" style="font-weight:700">${fmt(Math.abs(bal))}</td>
+          <td><span class="badge ${bc}">${bal>0?'DR':bal<0?'CR':'NIL'}</span></td>
+          <td class="no-print"></td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+};
+
+// ── Delete party confirmation ─────────────────────────────────────────────────
+window.confirmDeleteParty = idx => {
+  const p=parties[idx];
+  const bal=getBal(p.entries);
+  const old=document.getElementById('del-party-modal'); if(old) old.remove();
+  const div=document.createElement('div'); div.id='del-party-modal';
+  div.innerHTML=`<div class="form-overlay" id="del-party-overlay">
+    <div class="confirm-card">
+      <h3>Delete party?</h3>
+      <p>You are about to permanently delete <strong>${p.name}</strong>.</p>
+      <p style="margin-top:6px">This party has <strong>${p.entries.length} transaction(s)</strong>${bal!==0?` and an outstanding balance of <strong class="${bal>0?'dr-amt':'cr-amt'}">${fmt(Math.abs(bal))} ${bal>0?'DR':'CR'}</strong>`:''}.</p>
+      <p style="margin-top:10px;color:var(--dr-text);font-size:11px">⚠ This action cannot be undone.</p>
+      <div class="form-btns">
+        <button class="btn-cancel" onclick="closeDelParty()">Cancel</button>
+        <button class="btn-danger" onclick="executeDeleteParty(${idx})">Yes, delete party</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('root').appendChild(div);
+  document.getElementById('del-party-overlay').addEventListener('click',ev=>{ if(ev.target.id==='del-party-overlay') closeDelParty(); });
+};
+
+window.closeDelParty = () => { const el=document.getElementById('del-party-modal'); if(el) el.remove(); };
+
+window.executeDeleteParty = idx => {
+  const name=parties[idx].name;
+  parties.splice(idx,1);
+  // if we were viewing that party, go to summary
+  if(selectedParty===idx) selectedParty=null;
+  else if(selectedParty>idx) selectedParty--;
+  closeDelParty();
+  markUnsaved();
+  render();
+  showToast(`"${name}" deleted`);
+};
+
+// ── Entry modal ───────────────────────────────────────────────────────────────
+const renderEntryModal = () => {
+  const old=document.getElementById('entry-modal-host'); if(old) old.remove();
+  const isEdit=entryModal&&entryModal.mode==='edit';
+  const e=isEdit?parties[selectedParty].entries[entryModal.entryIdx]:null;
+  const div=document.createElement('div'); div.id='entry-modal-host';
+  div.innerHTML=`<div class="form-overlay" id="entry-overlay">
+    <div class="form-card">
+      <h3>${isEdit?'Edit transaction':'Add transaction'}</h3>
+      <div class="form-sub">${parties[selectedParty].name}</div>
+      <div class="form-row"><label>Date</label>
+        <input type="date" id="e-date" value="${isEdit?excelToInput(e.date):''}"/></div>
+      <div class="form-row"><label>Particular / Description</label>
+        <input type="text" id="e-part" placeholder="e.g. INVOICE 350" value="${isEdit?e.particular:''}"/></div>
+      <div class="form-grid">
+        <div class="form-row"><label>Debit (DR) ₹</label>
+          <input type="number" id="e-dr" placeholder="0" min="0" value="${isEdit&&e.dr>0?e.dr:''}"/></div>
+        <div class="form-row"><label>Credit (CR) ₹</label>
+          <input type="number" id="e-cr" placeholder="0" min="0" value="${isEdit&&e.cr>0?e.cr:''}"/></div>
+      </div>
+      <div class="form-btns">
+        <button class="btn-cancel" onclick="closeEntryModal()">Cancel</button>
+        <button class="btn-primary" onclick="${isEdit?'saveEditEntry()':'saveNewEntry()'}">${isEdit?'Save changes':'Add transaction'}</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('root').appendChild(div);
+  document.getElementById('entry-overlay').addEventListener('click',ev=>{ if(ev.target.id==='entry-overlay') closeEntryModal(); });
+  setTimeout(()=>{ const el=document.getElementById('e-part'); if(el) el.focus(); },50);
+};
+
+window.openAddEntry   = ()=>{ entryModal={mode:'add'}; renderEntryModal(); };
+window.openEditEntry  = i =>{ entryModal={mode:'edit',entryIdx:i}; renderEntryModal(); };
+window.closeEntryModal= ()=>{ entryModal=null; const el=document.getElementById('entry-modal-host'); if(el) el.remove(); };
+
+window.saveNewEntry = () => {
+  const part=document.getElementById('e-part').value.trim();
+  if(!part){alert('Please enter a description.');return;}
+  const dr=parseFloat(document.getElementById('e-dr').value)||0;
+  const cr=parseFloat(document.getElementById('e-cr').value)||0;
+  parties[selectedParty].entries.push({date:dateToExcel(document.getElementById('e-date').value),particular:part,dr,cr});
+  closeEntryModal(); markUnsaved(); render();
+};
+window.saveEditEntry = () => {
+  const part=document.getElementById('e-part').value.trim();
+  if(!part){alert('Please enter a description.');return;}
+  const dr=parseFloat(document.getElementById('e-dr').value)||0;
+  const cr=parseFloat(document.getElementById('e-cr').value)||0;
+  const entry=parties[selectedParty].entries[entryModal.entryIdx];
+  entry.date=dateToExcel(document.getElementById('e-date').value);
+  entry.particular=part; entry.dr=dr; entry.cr=cr;
+  closeEntryModal(); markUnsaved(); render();
+};
+window.delEntry = i => {
+  if(!confirm(`Delete "${parties[selectedParty].entries[i].particular}"?`)) return;
+  parties[selectedParty].entries.splice(i,1);
+  markUnsaved(); render();
+};
+
+// ── Add party ─────────────────────────────────────────────────────────────────
+window.openAddParty = () => {
+  const old=document.getElementById('party-modal-host'); if(old) old.remove();
+  const div=document.createElement('div'); div.id='party-modal-host';
+  div.innerHTML=`<div class="form-overlay" id="party-overlay">
+    <div class="form-card">
+      <h3>Add new party</h3>
+      <div class="form-sub">Will be added to the ledger</div>
+      <div class="form-row"><label>Party name</label>
+        <input type="text" id="np-name" placeholder="e.g. XYZ TRADERS" style="text-transform:uppercase"/></div>
+      <div class="form-btns">
+        <button class="btn-cancel" onclick="closeAddParty()">Cancel</button>
+        <button class="btn-primary" onclick="saveParty()">Add party</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('root').appendChild(div);
+  document.getElementById('party-overlay').addEventListener('click',ev=>{ if(ev.target.id==='party-overlay') closeAddParty(); });
+  setTimeout(()=>{ const el=document.getElementById('np-name'); if(el) el.focus(); },50);
+};
+window.closeAddParty = ()=>{ const el=document.getElementById('party-modal-host'); if(el) el.remove(); };
+window.saveParty = () => {
+  const name=document.getElementById('np-name').value.trim().toUpperCase();
+  if(!name){alert('Enter a party name.');return;}
+  if(parties.find(p=>p.name===name)){alert('Party already exists.');return;}
+  parties.push({name,entries:[]});
+  closeAddParty(); selectedParty=parties.length-1;
+  markUnsaved(); render();
+};
+
+updateSaveBtn();
+render();
+</script>
